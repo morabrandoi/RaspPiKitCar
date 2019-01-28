@@ -55,15 +55,18 @@ def Motor_Stop():
 # Servo angle drive function # angle in degrees [-90, 90] @ 50hz
 def SetServo7Angle(angle):
     cycle_val = (angle/36) + 7.5
-    Servo7.ChangeDutyCycle(cycle_val)  # set horizontal servo rotation angle
-    time.sleep(0.01)
+    for t in range(0, 101, 0.5):
+        time.sleep(0.02)
+        Servo7.ChangeDutyCycle(t)  # set horizontal servo rotation angle
+
 
 
 def SetServo8Angle(angle):
     cycle_val = (angle/36) + 7.5
-    Servo8.ChangeDutyCycle(cycle_val)  # Set vertical servo rotation angle
-    time.sleep(0.01)
-
+    # Servo8.ChangeDutyCycle(cycle_val)  # Set vertical servo rotation angle
+    for t in range(0, 101, 0.5):
+        time.sleep(0.02)
+        Servo7.ChangeDutyCycle(t)  # set horizontal servo rotation angle
 
 # Set the type of GPIO
 GPIO.setmode(GPIO.BCM)
@@ -98,11 +101,8 @@ GPIO.setup(IN4, GPIO.OUT, initial=GPIO.LOW)
 
 
 try:
-    for t in range(-90, 91, 1):
-        time.sleep(0.02)
-        print("t: {}".format(t))
-        SetServo7Angle(t)
-        SetServo8Angle(t)
+    SetServo7Angle(1)
+    SetServo8Angle(1)
 except KeyboardInterrupt:
     GPIO.cleanup()
     Servo7.stop()
