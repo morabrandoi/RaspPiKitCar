@@ -1,9 +1,10 @@
+# Python 2
+
 import RPi.GPIO as GPIO
 import time
 
 
-def Motor_Forward():
-	print('motor forward')
+def motor_forward():
 	GPIO.output(ENA, True)
 	GPIO.output(ENB, True)
 	GPIO.output(IN1, True)
@@ -12,8 +13,7 @@ def Motor_Forward():
 	GPIO.output(IN4, False)
 
 
-def Motor_Backward():
-	print('motor_backward')
+def motor_backward():
 	GPIO.output(ENA, True)
 	GPIO.output(ENB, True)
 	GPIO.output(IN1, False)
@@ -22,8 +22,7 @@ def Motor_Backward():
 	GPIO.output(IN4, True)
 
 
-def Motor_TurnLeft():
-	print('motor_turnleft')
+def motor_turn_left():
 	GPIO.output(ENA, True)
 	GPIO.output(ENB, True)
 	GPIO.output(IN1, True)
@@ -32,8 +31,7 @@ def Motor_TurnLeft():
 	GPIO.output(IN4, True)
 
 
-def Motor_TurnRight():
-	print('motor_turnright')
+def motor_turn_right():
 	GPIO.output(ENA, True)
 	GPIO.output(ENB, True)
 	GPIO.output(IN1, False)
@@ -52,13 +50,24 @@ def Motor_Stop():
 	GPIO.output(IN4, False)
 
 
-# Servo angle drive function # angle in degrees [-90, 90] @ 50hz
-def set_servo_angle(servo, angle):
-	if not (-90.0 <= angle <= 90.0):
-		raise Exception("Value of angle out of range")
-	cycle_val = (angle/36) + 7.5
-	servo.ChangeDutyCycle(cycle_val)
 
+print('Press 1+2 on your Wiimote now...')
+wm = None
+i=2
+while not wm:
+	try:
+		wm = cwiid.Wiimote()
+	except RuntimeError:
+		if (i>5):
+			print("cannot create connection")
+			quit()
+		print("Error opening wiimote connection")
+		print("attempt " + str(i))
+		i +=1
+
+wm.led = 1
+
+wm.rpt_mode = cwiid.RPT_ACC | cwiid.RPT_BTN
 
 # Set the type of GPIO
 GPIO.setmode(GPIO.BCM)
@@ -72,12 +81,6 @@ IN2 = 16  # //Motor interface 2 # motor reverse left
 IN3 = 21  # //Motor interface 3 # motor forward right
 IN4 = 26  # //Motor interface 4 # motor reverse right
 
-# Server control
-HORISERV = 21  # Horizontal servo BCM Pin 21
-
-GPIO.setup(HORISERV, GPIO.OUT)  # Horizontal servo port servo7
-horizontal_servo = GPIO.PWM(HORISERV, 50)  # 50HZ
-horizontal_servo.start(7.5)
 
 
 # Motor initialized to LOW
@@ -88,14 +91,42 @@ GPIO.setup(ENB, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(IN3, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(IN4, GPIO.OUT, initial=GPIO.LOW)
 
-
+wm.led = 1
+time.sleep(2)
+print("Now in Control")
 try:
-    set_servo_angle(horizontal_servo, -90)
-	time.sleep(2)
-	Motor_Forward()
-	set_servo_angle(0)
-	Motor_Backward()
-	set_servo_angle(90)
+	delay = 0.03
+	while wm.state["buttons"] == 0:
+		x, y, z = wm.state["acc"]
+		print(x,y,z)
+		forward = True
+		leftward = True
+
+		roll = 130 - x # mapped to throttle
+		if roll > 0:
+			forward = False
+		roll_on = abs(roll / 25.0)
+		if roll_on > 0.999:
+			roll_on = 0.999
+		roll_off = 1 - roll_on
+
+		pitch = 130 - y # mapped to turns
+		if pitch > 0:
+			leftward = False
+		pitch_on = abs(pitch / 25.0)
+		if pitch_on > 0.999:
+			pitch_on =  0.999
+		pitch_off = 1 - pitch_on
+
+		Motor_Stop()
+		time.sleep(delay * roll_off)
+
+		if forward:
+			motor_forward()
+		else:
+			motor_backward()
+		time.sleep(delay * roll_on)
+
 
 except KeyboardInterrupt:
     GPIO.cleanup()
