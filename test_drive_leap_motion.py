@@ -53,20 +53,12 @@ def Motor_Stop():
 
 
 # Servo angle drive function # angle in degrees [-90, 90] @ 50hz
-def SetServo7Angle(angle):
-    cycle_val = (angle/36) + 7.5
-    for t in range(0, 101, 0.5):
-        time.sleep(0.02)
-        Servo7.ChangeDutyCycle(t)  # set horizontal servo rotation angle
+def set_servo_angle(servo, angle):
+	if not (-90.0 <= angle <= 90.0):
+		raise Exception("Value of angle out of range")
+	cycle_val = (angle/36) + 7.5
+	servo.ChangeDutyCycle(cycle_val)
 
-
-
-def SetServo8Angle(angle):
-    cycle_val = (angle/36) + 7.5
-    # Servo8.ChangeDutyCycle(cycle_val)  # Set vertical servo rotation angle
-    for t in range(0, 101, 0.5):
-        time.sleep(0.02)
-        Servo7.ChangeDutyCycle(t)  # set horizontal servo rotation angle
 
 # Set the type of GPIO
 GPIO.setmode(GPIO.BCM)
@@ -81,15 +73,12 @@ IN3 = 21  # //Motor interface 3 # motor forward right
 IN4 = 26  # //Motor interface 4 # motor reverse right
 
 # Server control
-SER7 = 6  # Vertical servo  port servo7
-SER8 = 12  # Horizontal servo port servo8
+HORISERV = 21  # Horizontal servo BCM Pin 21
 
-GPIO.setup(SER7, GPIO.OUT)  # Horizontal servo port servo7
-GPIO.setup(SER8, GPIO.OUT)  # Vertical servo port servo8
-Servo7 = GPIO.PWM(SER7, 50)  # 50HZ
-Servo7.start(7.5)
-Servo8 = GPIO.PWM(SER8, 50)  # 50Hz
-Servo8.start(7.5)
+GPIO.setup(HORISERV, GPIO.OUT)  # Horizontal servo port servo7
+horizontal_servo = GPIO.PWM(HORISERV, 50)  # 50HZ
+horizontal_servo.start(7.5)
+
 
 # Motor initialized to LOW
 GPIO.setup(ENA, GPIO.OUT, initial=GPIO.LOW)
@@ -101,13 +90,14 @@ GPIO.setup(IN4, GPIO.OUT, initial=GPIO.LOW)
 
 
 try:
-    SetServo7Angle(1)
-    SetServo8Angle(1)
+    set_servo_angle(horizontal_servo, -90)
+	time.sleep(2)
+	Motor_Forward()
+	set_servo_angle(0)
+	Motor_Backward()
+	set_servo_angle(90)
+
 except KeyboardInterrupt:
     GPIO.cleanup()
-    Servo7.stop()
-    Servo8.stop()
 
 GPIO.cleanup()
-Servo7.stop()
-Servo8.stop()
