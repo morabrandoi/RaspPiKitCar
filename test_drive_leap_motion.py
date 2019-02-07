@@ -50,25 +50,6 @@ def Motor_Stop():
 	GPIO.output(IN4, False)
 
 
-
-print('Press 1+2 on your Wiimote now...')
-wm = None
-i=2
-while not wm:
-	try:
-		wm = cwiid.Wiimote()
-	except RuntimeError:
-		if (i>5):
-			print("cannot create connection")
-			quit()
-		print("Error opening wiimote connection")
-		print("attempt " + str(i))
-		i +=1
-
-wm.led = 1
-
-wm.rpt_mode = cwiid.RPT_ACC | cwiid.RPT_BTN
-
 # Set the type of GPIO
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
