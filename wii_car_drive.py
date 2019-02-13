@@ -158,7 +158,6 @@ def write_to_motors(left, right):
     abs_right_speed = max(0, min(abs(right) * 100, 100))
     l_forwards = left > 0
     r_forwards = right > 0
-    print("l{} r{}".format(abs_left_speed, abs_right_speed))
     [LR_PWM.ChangeDutyCycle, LF_PWM.ChangeDutyCycle][not l_forwards](0)
     [LR_PWM.ChangeDutyCycle, LF_PWM.ChangeDutyCycle][l_forwards](abs_left_speed)
     [RR_PWM.ChangeDutyCycle, RF_PWM.ChangeDutyCycle][not r_forwards](0)
@@ -170,7 +169,6 @@ def output_loop():
     while wm.state["buttons"] != 15:
         pitch, roll = get_remote_data()
         left, right = map_to_left_right(pitch, roll)
-        print("out of math: ", left, right)
         write_to_motors(left, right)
 
 
