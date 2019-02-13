@@ -3,25 +3,7 @@
 import RPi.GPIO as GPIO
 import time
 import cwiid
-import threading
 import math
-
-
-class Motor_Thread(threading.Thread):
-	def __init__(self, sid):
-		self.side = sid
-		self.MAX_SLEEP = 0.02
-		self.done = True
-
-	def run(self, speed, forward):
-		self.done = False
-		for _ in range(8):
-			motor_side_off(self.side)
-			time.sleep(self.MAX_SLEEP * speed)
-			motor_side_on(self.side, forward)
-			time.sleep(self.MAX_SLEEP * (1.0-speed))
-
-		self.done = True
 
 # Set the type of GPIO
 GPIO.setmode(GPIO.BCM)
@@ -42,6 +24,14 @@ GPIO.setup(LEFT_REVERSE, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(ENABLE_RIGHT, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(RIGHT_FORWARD, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(RIGHT_REVERSE, GPIO.OUT, initial=GPIO.LOW)
+
+LF_PWM = GPIO.PWM(LEFT_FORWARD, 100)
+LR_PWM = GPIO.PWM(LEFT_REVERSE, 100)
+RF_PWM = GPIO.PWM(RIGHT_FORWARD, 100)
+RR_PWM = GPIO.PWM(RIGHT_REVERSE, 100)
+
+GPIO.output(ENABLE_LEFT, True)
+GPIO.output(ENABLE_RIGHT, True)
 
 
 print('Press 1+2 on your Wiimote now...')
@@ -65,8 +55,6 @@ wm.rpt_mode = cwiid.RPT_ACC | cwiid.RPT_BTN
 
 print("Now in Control")
 
-left_motor_thread = Motor_Thread("left")
-right_motor_thread = Motor_Thread("right")
 
 
 def motor_forward():
@@ -94,28 +82,6 @@ def motor_stop():
 	GPIO.output(LEFT_REVERSE, False)
 	GPIO.output(RIGHT_FORWARD, False)
 	GPIO.output(RIGHT_REVERSE, False)
-
-
-def motor_side_on(side, forward=True):
-	if side == "left":
-		GPIO.output(ENABLE_LEFT, True)
-		GPIO.output(LEFT_FORWARD, forward)
-		GPIO.output(LEFT_REVERSE, not forward)
-	else:
-		GPIO.output(ENABLE_RIGHT, True)
-		GPIO.output(RIGHT_FORWARD, forward)
-		GPIO.output(RIGHT_REVERSE, not forward)
-
-
-def motor_side_off(side):
-	if side == "left":
-		GPIO.output(ENABLE_LEFT, False)
-		GPIO.output(LEFT_FORWARD, False)
-		GPIO.output(LEFT_REVERSE, False)
-	else:
-		GPIO.output(ENABLE_RIGHT, False)
-		GPIO.output(RIGHT_FORWARD, False)
-		GPIO.output(RIGHT_REVERSE, False)
 
 
 # return pitch and roll
@@ -189,12 +155,19 @@ def map_to_left_right(pit, rol):
 
 def write_to_motors(left, right):
 	print("Left then right motor speed: ", left, right)
-	abs_left_speed = max(0.001, min(abs(left), 0.998))
-	abs_right_speed = max(0.001, min(abs(right), 0.998))
-	if left_motor_thread.done:
-		left_motor_thread.run(abs_left_speed, left >= 0.0)
-	if right_motor_thread.done:
-		right_motor_thread.run(abs_right_speed, right >= 0.0)
+	abs_left_speed = max(0, min(abs(left) * 100, 100))
+	abs_right_speed = max(0, min(abs(right) * 100, 100))
+    l_forwards = left > 0
+    r_forwards = right > 0
+    GPIO.output(LEFT_FORWARD, l_forwards)
+    GPIO.output(LEFT_REVERSE, not l_forwards)
+
+    GPIO.output(RIGHT_FORWARD, r_forwards)
+    GPIO.output(RIGHT_REVERSE, not r_forwards)
+
+    [LR_PWM, LF_PWM][l_forwards](abs_left_speed)
+    [RR_PWM, RF_PWM][r_forwards](abs_right_speed)
+
 
 
 def output_loop():
