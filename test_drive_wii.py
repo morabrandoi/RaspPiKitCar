@@ -33,6 +33,10 @@ RR_PWM = GPIO.PWM(RIGHT_REVERSE, 100)
 GPIO.output(ENABLE_LEFT, True)
 GPIO.output(ENABLE_RIGHT, True)
 
+LF_PWM.start(0)
+LR_PWM.start(0)
+RF_PWM.start(0)
+RR_PWM.start(0)
 
 print('Press 1+2 on your Wiimote now...')
 wm = None
@@ -165,8 +169,8 @@ def write_to_motors(left, right):
     GPIO.output(RIGHT_FORWARD, r_forwards)
     GPIO.output(RIGHT_REVERSE, not r_forwards)
 
-    [LR_PWM, LF_PWM][l_forwards](abs_left_speed)
-    [RR_PWM, RF_PWM][r_forwards](abs_right_speed)
+    [LR_PWM.ChangeDutyCycle, LF_PWM.ChangeDutyCycle][l_forwards](abs_left_speed)
+    [RR_PWM.ChangeDutyCycle, RF_PWM.ChangeDutyCycle][r_forwards](abs_right_speed)
 
 
 
