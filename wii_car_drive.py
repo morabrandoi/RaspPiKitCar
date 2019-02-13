@@ -18,6 +18,7 @@ LEFT_FORWARD = 19  # Motor interface 1 # motor forward left
 LEFT_REVERSE = 16  # Motor interface 2 # motor reverse left
 RIGHT_FORWARD = 21  # Motor interface 3 # motor forward right
 RIGHT_REVERSE = 26  # Motor interface 4 # motor reverse right
+LIGHTS = [25, 9, 10] # LED lights on shield
 
 # Motor initialized to LOW
 GPIO.setup(ENABLE_LEFT, GPIO.OUT, initial=GPIO.LOW)
@@ -26,6 +27,10 @@ GPIO.setup(LEFT_REVERSE, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(ENABLE_RIGHT, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(RIGHT_FORWARD, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(RIGHT_REVERSE, GPIO.OUT, initial=GPIO.LOW)
+
+GPIO.setup(LIGHTS[0], GPIO.OUT, initial=GPIO.HIGH)
+GPIO.setup(LIGHTS[1], GPIO.OUT, initial=GPIO.HIGH)
+GPIO.setup(LIGHTS[2], GPIO.OUT, initial=GPIO.HIGH)
 
 LF_PWM = GPIO.PWM(LEFT_FORWARD, FREQ)
 LR_PWM = GPIO.PWM(LEFT_REVERSE, FREQ)
@@ -39,6 +44,14 @@ LF_PWM.start(0)
 LR_PWM.start(0)
 RF_PWM.start(0)
 RR_PWM.start(0)
+
+for _ in range(3):
+    for light_pin_num in LIGHTS:
+        GPIO.output(light_pin_num, False)
+        time.sleep(0.08)
+    for light_pin_num in LIGHTS:
+        GPIO.output(light_pin_num, True)
+        time.sleep(0.08)
 
 print('Press 1+2 on your Wiimote now...')
 wm = None
@@ -145,7 +158,6 @@ def write_to_motors(left, right):
     abs_right_speed = max(0, min(abs(right) * 100, 100))
     l_forwards = left > 0
     r_forwards = right > 0
-    
     print("l{} r{}".format(abs_left_speed, abs_right_speed))
     [LR_PWM.ChangeDutyCycle, LF_PWM.ChangeDutyCycle][not l_forwards](0)
     [LR_PWM.ChangeDutyCycle, LF_PWM.ChangeDutyCycle][l_forwards](abs_left_speed)
